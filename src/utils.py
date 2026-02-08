@@ -4,10 +4,8 @@ import sys
 import pandas as pd
 from garminconnect import Garmin
 
-# Adiciona o diretório atual ao path para importar o exercise_db corretamente
+# Adiciona diretório ao path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-# Importa o dicionário do arquivo separado
 from exercise_db import EXERCISE_DB
 
 def authenticate_garmin():
@@ -29,11 +27,28 @@ def sanitize_text(text):
     return text.strip().upper()
 
 def get_exercise_data(name):
+    """
+    Busca a chave mais específica (mais longa) dentro do nome do exercício.
+    Palavras nulas (articulada, polia) são ignoradas pois não existem no EXERCISE_DB.
+    """
     name_clean = sanitize_text(name).lower()
+    matches = []
+
     for key, data in EXERCISE_DB.items():
         if key in name_clean:
-            return data
-    return {"cat": "CARRY", "name": "CARRY"}
+            matches.append((key, data))
+    
+    if not matches:
+        # Fallback se não achar nada
+        print(f"⚠️ Aviso: '{name}' não encontrado. Usando genérico.")
+        return {"cat": "CARRY", "name": "CARRY"}
+    
+    # A MÁGICA: Ordena pelo tamanho da chave.
+    # 'rosca scott' (11) ganha de 'rosca' (5).
+    # 'remada articulada' (17) ganha de 'remada' (6).
+    best_match = max(matches, key=lambda x: len(x[0]))
+    
+    return best_match[1]
 
 def generate_workout_payload(workout_name, df):
     workout_steps = []
@@ -82,19 +97,14 @@ def generate_workout_payload(workout_name, df):
                 "stepId": None,
                 "stepOrder": None,
                 "childStepId": child_id,
-                
-                # AQUI ESTÁ A ALTERAÇÃO SOLICITADA:
-                # Inclui a string (ex: "60s") no campo de observação
                 "description": f"{descanso}s",
-                
                 "stepType": {"stepTypeId": 5, "stepTypeKey": "rest", "displayOrder": 5},
-                # Mantemos "time" para o relógio vibrar sozinho, mas com a obs visual
                 "endCondition": {"conditionTypeId": 1, "conditionTypeKey": "time", "displayOrder": 1},
                 "endConditionValue": descanso,
                 "targetType": {"workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target"}
             }
 
-        # --- Bloco (Grupo) ---
+        # --- Montagem do Bloco ---
         block_steps = []
         if series > 1:
             group_order = global_order_counter
