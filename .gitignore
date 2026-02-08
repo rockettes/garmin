@@ -1,35 +1,18 @@
-# --- Python ---
-__pycache__/
-*.py[cod]
-*$py.class
-
-# --- Virtual Environment (Onde ficam as bibliotecas instaladas) ---
-# Nunca comite isso, pois cada máquina deve criar o seu
-.venv/
+# Ambientes virtuais
 venv/
+.venv/
 env/
-ENV/
 
-# --- Variáveis de Ambiente e Segredos (CRÍTICO) ---
-# Protege suas senhas do Garmin de irem para o GitHub
+# Python cache
+__pycache__/
+*.pyc
+
+# Variáveis de ambiente (SEGURANÇA CRÍTICA)
 .env
-.env.local
 
-# --- Dados e Arquivos CSV ---
-# Ignora os arquivos de treino gerados ou usados como input
-# Se quiser comitar um exemplo, use nomes como "exemplo.csv"
-data/*.csv
-*.csv
-
-# --- Logs e Debug ---
-*.log
-debug_*.json
-*.fit
-
-# --- IDEs e Editores ---
+# IDEs
 .vscode/
 .idea/
 
-# --- Sistema Operacional ---
-.DS_Store
-Thumbs.db
+# Dados processados (opcional, se quiser gerar na hora)
+# data/processed/

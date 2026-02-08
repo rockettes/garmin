@@ -1,8 +1,5 @@
-setuptools
+unidecode
+flask
 garminconnect
-pandas
 python-dotenv
-selenium-wire 
-webdriver-manager 
-blinker==1.7
-undetected-chromedriver
+requests

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garmin Studio | Editor de Treinos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <style>
+        body { 
+            background-color: #f0f2f5; 
+            font-family: 'Segoe UI', sans-serif; 
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .main-container { max-width: 1400px; margin: 30px auto; padding: 20px; }
+        
+        /* Estilo da Tabela */
+        .workout-table { 
+            background: var(--bs-body-bg); /* Usa a cor de fundo do tema (branco ou preto) */
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            /* overflow: hidden; REMOVIDO PARA O DROPDOWN NÃO CORTAR */
+        }
+        
+        .workout-table th { 
+            background-color: #2c3e50; 
+            color: white; 
+            font-weight: 500; 
+            border: none; 
+            padding: 12px; 
+        }
+
+        .workout-table td { 
+            vertical-align: middle; 
+            padding: 8px; 
+            border-bottom: 1px solid var(--bs-border-color); 
+        }
+
+        /* Ajustes específicos para Dark Mode */
+        [data-bs-theme="dark"] body {
+            background-color: #121212;
+        }
+        [data-bs-theme="dark"] .workout-table {
+            box-shadow: 0 2px 10px rgba(255,255,255,0.05);
+        }
+        
+        /* Autocomplete Customizado */
+        .autocomplete-wrapper { position: relative; }
+        
+        .autocomplete-results {
+            position: absolute; z-index: 1000; top: 100%; left: 0; right: 0;
+            background: var(--bs-body-bg); /* Adapta ao tema */
+            border: 1px solid var(--bs-border-color);
+            border-radius: 0 0 4px 4px;
+            max-height: 400px; /* Altura maior conforme pedido */
+            overflow-y: auto; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .autocomplete-item { 
+            padding: 8px 12px; 
+            cursor: pointer; 
+            border-bottom: 1px solid var(--bs-border-color); 
+            font-size: 0.9rem; 
+            color: var(--bs-body-color);
+        }
+
+        .autocomplete-item:hover, .autocomplete-item.active { 
+            background-color: var(--bs-tertiary-bg); 
+            color: var(--bs-primary); 
+        }
+
+        .autocomplete-item small { 
+            color: var(--bs-secondary-color); 
+            font-size: 0.75rem; 
+            display: block; 
+        }
+
+        /* Utilitários */
+        .status-badge { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .col-action { width: 50px; text-align: center; }
+        
+        /* Botão de Tema */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            cursor: pointer;
+            background: var(--bs-body-bg);
+            border: 1px solid var(--bs-border-color);
+            padding: 8px 12px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="theme-toggle" onclick="toggleTheme()">
+    <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
+</div>
+
+<div id="app" class="main-container">
+    {% raw %}
+
+    <div class="status-badge" style="top: 70px;" v-if="notification.show">
+        <div class="alert" :class="'alert-' + notification.type">
+            {{ notification.message }}
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold"><i class="bi bi-watch"></i> Garmin Studio</h2>
+            <p class="text-muted mb-0">Crie múltiplos treinos em uma única tabela.</p>
+        </div>
+        <div>
+            <button class="btn btn-success btn-lg" @click="processAndSend" :disabled="loading || rows.length === 0">
+                <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                <i class="bi bi-cloud-upload" v-else></i> 
+                <span v-if="!loading">Processar e Enviar</span>
+                <span v-else>Enviando...</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="workout-table">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 3%;">#</th>
+                    <th style="width: 20%;">Nome do Treino</th>
+                    <th style="width: 25%;">Exercício (Busca)</th>
+                    <th style="width: 15%;">Nota</th>
+                    <th style="width: 7%;">Séries</th>
+                    <th style="width: 7%;">Reps</th>
+                    <th style="width: 7%;">Kg</th>
+                    <th style="width: 10%;">Descanso</th>
+                    <th class="col-action"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="(row, index) in rows" :key="index">
+                    <td class="text-center text-muted">{{ index + 1 }}</td>
+                    
+                    <td>
+                        <input type="text" class="form-control form-control-sm fw-bold text-primary" 
+                               v-model="row.workoutName" 
+                               placeholder="Ex: Peito A"
+                               list="workoutNamesList"> 
+                    </td>
+
+                    <td>
+                        <div class="autocomplete-wrapper" v-click-outside="() => closeAutocomplete(index)">
+                            <input type="text" 
+                                   class="form-control form-control-sm" 
+                                   v-model="row.exerciseSearch" 
+                                   @input="onSearchInput(index)"
+                                   @focus="onSearchInput(index)"
+                                   placeholder="Buscar..."
+                                   :class="{'is-valid': row.exerciseId, 'is-invalid': !row.exerciseId && row.exerciseSearch.length > 2}">
+                            
+                            <div class="autocomplete-results" v-if="activeSearchIndex === index && searchResults.length > 0">
+                                <div class="autocomplete-item" 
+                                     v-for="item in searchResults" 
+                                     @click="selectExercise(index, item)">
+                                    <strong>{{ item.label }}</strong>
+                                    <small>{{ item.category }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td>
+                        <input type="text" class="form-control form-control-sm" v-model="row.note" placeholder="Obs">
+                    </td>
+
+                    <td>
+                        <input type="number" class="form-control form-control-sm text-center" v-model.number="row.sets" min="1">
+                    </td>
+
+                    <td>
+                        <input type="number" class="form-control form-control-sm text-center" v-model.number="row.reps" min="1">
+                    </td>
+
+                    <td>
+                        <input type="number" class="form-control form-control-sm text-center" v-model.number="row.weight" step="0.5">
+                    </td>
+
+                    <td>
+                        <div class="input-group input-group-sm">
+                            <input type="number" class="form-control text-center" v-model.number="row.rest" min="0">
+                            <span class="input-group-text">s</span>
+                        </div>
+                    </td>
+
+                    <td class="col-action">
+                        <button class="btn btn-link text-danger p-0" @click="removeRow(index)" tabindex="-1">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="p-3 border-top d-flex justify-content-between">
+            <div>
+                <button class="btn btn-outline-secondary btn-sm" @click="addRow">
+                    <i class="bi bi-plus-lg"></i> Adicionar
+                </button>
+                <button class="btn btn-outline-secondary btn-sm ms-2" @click="duplicateLastRow" v-if="rows.length > 0">
+                    <i class="bi bi-files"></i> Duplicar
+                </button>
+            </div>
+            <small class="text-muted align-self-center">{{ rows.length }} itens</small>
+        </div>
+    </div>
+
+    <datalist id="workoutNamesList">
+        <option v-for="name in uniqueWorkoutNames" :value="name"></option>
+    </datalist>
+
+    {% endraw %}
+</div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+    // --- Lógica do Dark Mode ---
+    function toggleTheme() {
+        const html = document.documentElement;
+        const icon = document.getElementById('theme-icon');
+        const current = html.getAttribute('data-bs-theme');
+        
+        if (current === 'light') {
+            html.setAttribute('data-bs-theme', 'dark');
+            icon.className = 'bi bi-sun-fill text-warning';
+            localStorage.setItem('theme', 'dark');
+        } else {
+            html.setAttribute('data-bs-theme', 'light');
+            icon.className = 'bi bi-moon-stars-fill';
+            localStorage.setItem('theme', 'light');
+        }
+    }
+
+    // Carrega tema salvo
+    if (localStorage.getItem('theme') === 'dark') {
+        toggleTheme();
+    }
+
+    // --- Vue App ---
+    const { createApp } = Vue
+
+    const clickOutside = {
+        beforeMount(el, binding) {
+            el.clickOutsideEvent = function(event) {
+                if (!(el === event.target || el.contains(event.target))) {
+                    binding.value(event, el);
+                }
+            };
+            document.body.addEventListener('click', el.clickOutsideEvent);
+        },
+        unmounted(el) {
+            document.body.removeEventListener('click', el.clickOutsideEvent);
+        }
+    };
+
+    createApp({
+        directives: { clickOutside },
+        data() {
+            return {
+                loading: false,
+                database: [],
+                rows: [],
+                activeSearchIndex: -1,
+                searchResults: [],
+                notification: { show: false, message: '', type: 'info' }
+            }
+        },
+        computed: {
+            uniqueWorkoutNames() {
+                return [...new Set(this.rows.map(r => r.workoutName).filter(n => n))];
+            }
+        },
+        async mounted() {
+            await this.loadExerciseDatabase();
+            this.addRow();
+        },
+        methods: {
+            async loadExerciseDatabase() {
+                try {
+                    const response = await axios.get('/api/exercises');
+                    this.database = response.data;
+                } catch (error) {
+                    this.showNotify('Erro ao carregar banco de dados.', 'danger');
+                }
+            },
+            addRow() {
+                const lastWorkout = this.rows.length > 0 ? this.rows[this.rows.length - 1].workoutName : '';
+                this.rows.push({
+                    workoutName: lastWorkout,
+                    exerciseSearch: '',
+                    exerciseId: null,
+                    exerciseLabel: '',
+                    note: '',
+                    sets: 3,
+                    reps: 10,
+                    weight: null,
+                    rest: 60
+                });
+            },
+            duplicateLastRow() {
+                if (this.rows.length === 0) return;
+                const last = this.rows[this.rows.length - 1];
+                this.rows.push(JSON.parse(JSON.stringify(last)));
+            },
+            removeRow(index) {
+                this.rows.splice(index, 1);
+            },
+            onSearchInput(index) {
+                this.activeSearchIndex = index;
+                const term = this.rows[index].exerciseSearch.toLowerCase();
+                if (term.length === 0) {
+                    this.rows[index].exerciseId = null;
+                    this.searchResults = [];
+                    return;
+                }
+                // Filtro "Contains"
+                this.searchResults = this.database.filter(ex => 
+                    ex.search_term.includes(term)
+                ).slice(0, 100); // Aumentei o limite para 100
+            },
+            selectExercise(index, item) {
+                this.rows[index].exerciseId = item.id;
+                this.rows[index].exerciseLabel = item.label;
+                this.rows[index].exerciseSearch = item.label;
+                this.activeSearchIndex = -1;
+            },
+            closeAutocomplete(index) {
+                if (this.activeSearchIndex === index) {
+                    this.activeSearchIndex = -1;
+                }
+            },
+            async processAndSend() {
+                const invalidRows = this.rows.filter(r => !r.workoutName || !r.exerciseId);
+                if (invalidRows.length > 0) {
+                    this.showNotify(`Preencha nome do treino e exercício em todas as linhas!`, 'warning');
+                    return;
+                }
+                this.loading = true;
+                try {
+                    const groups = {};
+                    this.rows.forEach(row => {
+                        const name = row.workoutName.trim();
+                        if (!groups[name]) groups[name] = [];
+                        groups[name].push({
+                            exerciseId: row.exerciseId,
+                            note: row.note,
+                            sets: row.sets,
+                            reps: row.reps,
+                            weight: row.weight,
+                            restDuration: row.rest
+                        });
+                    });
+
+                    const workoutNames = Object.keys(groups);
+                    let successCount = 0;
+
+                    for (const name of workoutNames) {
+                        const payload = {
+                            workoutName: name,
+                            steps: groups[name]
+                        };
+                        await axios.post('/api/upload', payload);
+                        successCount++;
+                    }
+                    this.showNotify(`Sucesso! ${successCount} treinos criados.`, 'success');
+                } catch (error) {
+                    const msg = error.response?.data?.error || error.message;
+                    this.showNotify(`Erro: ${msg}`, 'danger');
+                } finally {
+                    this.loading = false;
+                }
+            },
+            showNotify(msg, type) {
+                this.notification = { show: true, message: msg, type: type };
+                setTimeout(() => this.notification.show = false, 5000);
+            }
+        }
+    }).mount('#app')
+</script>
+
+</body>
+</html>
