@@ -39,7 +39,7 @@ Você precisa de **Python 3** instalado. Se você sabe contar anilhas, sabe roda
 
 1.  **Clone o projeto:**
     ```bash
-    git clone [https://github.com/seu-usuario/garmin-studio.git](https://github.com/seu-usuario/garmin-studio.git)
+    git clone [https://github.com/rockettes/garmin](https://github.com/rockettes/garmin.git)
     cd garmin-studio
     ```
 
