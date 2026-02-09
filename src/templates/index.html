@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br" data-bs-theme="light">
+<html lang="pt-br" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,39 +8,119 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
     <style>
-        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; transition: 0.3s; }
-        .main-container { max-width: 1400px; margin: 30px auto; padding: 20px; }
-        .workout-table { background: var(--bs-body-bg); border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .workout-table th { background-color: #2c3e50; color: white; font-weight: 500; border: none; padding: 12px; }
-        .workout-table td { vertical-align: middle; padding: 8px; border-bottom: 1px solid var(--bs-border-color); }
-        [data-bs-theme="dark"] body { background-color: #121212; }
-        
-        .autocomplete-wrapper { position: relative; }
-        .autocomplete-results {
-            position: absolute; z-index: 1000; top: 100%; left: 0; right: 0;
-            background: var(--bs-body-bg); border: 1px solid var(--bs-border-color);
-            border-radius: 0 0 4px 4px; max-height: 300px; overflow-y: auto; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        /* DARK MODE TOTAL */
+        :root {
+            --bg-body: #121212;
+            --bg-card: #1e1e1e;
+            --text-main: #e0e0e0;
+            --border-color: #333;
+            --input-bg: #2b2b2b;
         }
-        .autocomplete-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--bs-border-color); font-size: 0.9rem; }
-        .autocomplete-item:hover { background-color: var(--bs-tertiary-bg); color: var(--bs-primary); }
-        .autocomplete-item small { color: var(--bs-secondary-color); display: block; font-size: 0.75rem;}
         
-        .debug-text { font-size: 0.7rem; color: #dc3545; display: block; margin-top: 2px; }
+        body { background-color: var(--bg-body) !important; color: var(--text-main); }
         
-        .theme-toggle { position: fixed; top: 20px; right: 20px; z-index: 1000; cursor: pointer; background: var(--bs-body-bg); padding: 8px 12px; border-radius: 20px; border: 1px solid var(--bs-border-color);}
+        .main-container { max-width: 1400px; margin: 30px auto; padding: 20px; }
+        
+        /* Cards */
+        .card-custom { 
+            background-color: var(--bg-card); 
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        /* Tabela */
+        .workout-table { background-color: var(--bg-card); width: 100%; border-collapse: separate; border-spacing: 0; }
+        .workout-table th { background-color: #0d6efd; color: white; border: none; padding: 12px; }
+        
+        /* CORREÇÃO CRÍTICA DO POSICIONAMENTO */
+        .workout-table td { 
+            border-bottom: 1px solid var(--border-color); 
+            padding: 8px; 
+            vertical-align: middle; 
+            position: relative; /* Garante que elementos absolutos fiquem ancorados aqui se necessário */
+        }
+        
+        .workout-table tr:hover td { background-color: #2c2c2c; }
+
+        /* Inputs */
+        .form-control, .form-select {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: #fff;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #333;
+            border-color: #0d6efd;
+            color: #fff;
+            box-shadow: none;
+        }
+        /* Remove fundo branco do autocomplete do navegador */
+        input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 30px var(--input-bg) inset !important;
+            -webkit-text-fill-color: white !important;
+        }
+
+        /* AUTOCOMPLETE - CORREÇÃO DE POSIÇÃO */
+        .autocomplete-wrapper { 
+            position: relative; /* O pai RELATIVO segura o filho ABSOLUTO */
+            width: 100%;
+            display: block;
+        }
+
+        .autocomplete-results {
+            background-color: var(--input-bg);
+            border: 1px solid #0d6efd;
+            
+            /* Posicionamento Absoluto em relação ao Wrapper */
+            position: absolute; 
+            top: 100%; /* Logo abaixo do input */
+            left: 0; 
+            width: 100%; /* Mesma largura do input */
+            
+            max-height: 250px; 
+            overflow-y: auto;
+            z-index: 9999; /* Bem alto para flutuar sobre as linhas de baixo */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            border-radius: 0 0 4px 4px;
+        }
+        
+        .autocomplete-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border-color); }
+        .autocomplete-item:hover { background-color: #0d6efd; color: white; }
+
+        /* Texto de Debug */
+        .debug-text { 
+            font-size: 0.7rem; 
+            color: #ffc107; 
+            display: block; 
+            margin-top: 2px; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
+
+        /* Abas */
+        .nav-tabs { border-bottom-color: var(--border-color); }
+        .nav-tabs .nav-link { color: #aaa; border: 1px solid transparent; }
+        .nav-tabs .nav-link:hover { border-color: var(--border-color); color: #fff; }
+        .nav-tabs .nav-link.active { 
+            background-color: var(--bg-card); 
+            color: #0d6efd; 
+            border-color: var(--border-color) var(--border-color) var(--bg-card); 
+        }
+
+        /* List Group (Delete) */
+        .list-group-item {
+            background-color: var(--input-bg);
+            border-color: var(--border-color);
+            color: white;
+        }
+
         #csvInput { display: none; }
-        .row-warning { background-color: rgba(255, 193, 7, 0.1) !important; }
-        .search-tips { font-size: 0.85rem; background: var(--bs-tertiary-bg); border-radius: 6px; padding: 15px; margin-top: 20px; border: 1px dashed var(--bs-border-color); }
-        
-        footer { font-size: 0.8rem; letter-spacing: 1px; font-weight: bold; opacity: 0.7; }
+        footer { margin-top: 50px; opacity: 0.5; font-size: 0.8rem; letter-spacing: 1px; text-align: center; }
     </style>
 </head>
 <body>
-
-<div class="theme-toggle" onclick="toggleTheme()">
-    <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
-</div>
 
 <div id="app" class="main-container">
     {% raw %}
@@ -55,125 +135,147 @@
     </div>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="fw-bold"><i class="bi bi-watch"></i> Garmin Studio</h2>
-        </div>
-        <div class="d-flex gap-2">
-            <button class="btn btn-primary" @click="triggerFileInput" :disabled="loading">
-                <i class="bi bi-filetype-csv"></i> Importar CSV
-            </button>
-            <input type="file" id="csvInput" accept=".csv" @change="handleFileUpload">
+        <h2 class="fw-bold text-primary m-0"><i class="bi bi-watch"></i> Garmin Studio</h2>
+        <small class="text-muted">Editor & Manager</small>
+    </div>
 
-            <button class="btn btn-secondary" @click="exportCSV" :disabled="rows.length === 0">
-                <i class="bi bi-download"></i> Exportar CSV
-            </button>
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link" :class="{active: currentTab === 'editor'}" @click="currentTab = 'editor'">
+                <i class="bi bi-pencil-square"></i> Editor
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" :class="{active: currentTab === 'manager'}" @click="currentTab = 'manager'">
+                <i class="bi bi-trash3"></i> Gerenciador
+            </a>
+        </li>
+    </ul>
 
-            <button class="btn btn-success" @click="processAndSend" :disabled="loading || rows.length === 0">
+    <div v-show="currentTab === 'editor'">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary" @click="triggerFileInput" :disabled="loading">
+                    <i class="bi bi-upload"></i> Importar CSV
+                </button>
+                <input type="file" id="csvInput" accept=".csv" @change="handleFileUpload">
+                
+                <button class="btn btn-secondary" @click="exportCSV" :disabled="rows.length === 0">
+                    <i class="bi bi-download"></i> Exportar
+                </button>
+
+                <button class="btn btn-info text-white" @click="pullWorkouts" :disabled="loading">
+                    <i class="bi bi-cloud-download"></i> PULL (Baixar)
+                </button>
+            </div>
+
+            <button class="btn btn-success btn-lg" @click="processAndSend" :disabled="loading || rows.length === 0">
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
                 <i class="bi bi-cloud-upload" v-else></i> 
-                {{ loading ? 'Enviando...' : 'Processar e Enviar' }}
+                {{ loading ? 'Enviando...' : 'PUSH (Enviar)' }}
             </button>
         </div>
-    </div>
 
-    <div class="workout-table">
-        <table class="table table-hover mb-0">
-            <thead>
-                <tr>
-                    <th style="width: 3%;">#</th>
-                    <th style="width: 20%;">Nome do Treino</th>
-                    <th style="width: 25%;">Exercício (Busca Inteligente)</th>
-                    <th style="width: 15%;">Nota</th>
-                    <th style="width: 7%;">Séries</th>
-                    <th style="width: 7%;">Reps</th>
-                    <th style="width: 7%;">Kg</th>
-                    <th style="width: 10%;">Descanso</th>
-                    <th style="width: 5%;"></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="(row, index) in rows" :key="index" :class="{'row-warning': !row.exerciseId}">
-                    <td class="text-center text-muted">{{ index + 1 }}</td>
-                    
-                    <td><input type="text" class="form-control form-control-sm fw-bold text-primary" v-model="row.workoutName" list="workoutNamesList"></td>
-                    
-                    <td>
-                        <div class="autocomplete-wrapper" v-click-outside="() => closeAutocomplete(index)">
-                            <input type="text" 
-                                   class="form-control form-control-sm" 
-                                   v-model="row.exerciseSearch" 
-                                   @input="onSearchInput(index)"
-                                   @focus="onSearchInput(index)"
-                                   placeholder="Digite para buscar..."
-                                   :class="{'is-invalid': !row.exerciseId, 'is-valid': row.exerciseId}">
-                            
-                            <small class="debug-text" v-if="activeSearchIndex === index && row.debugPhrases">
-                                🔍 Buscando: {{ row.debugPhrases }}
-                            </small>
+        <div class="card-custom overflow-visible"> <table class="table workout-table mb-0">
+                <thead>
+                    <tr>
+                        <th width="3%">#</th>
+                        <th width="20%">Treino</th>
+                        <th width="25%">Exercício</th>
+                        <th width="15%">Nota</th>
+                        <th width="7%">Séries</th>
+                        <th width="7%">Reps</th>
+                        <th width="7%">Kg</th>
+                        <th width="10%">Descanso</th>
+                        <th width="5%"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(row, index) in rows" :key="index">
+                        <td class="text-center text-muted">{{ index + 1 }}</td>
+                        <td><input type="text" class="form-control form-control-sm fw-bold text-primary" v-model="row.workoutName" list="workoutNamesList"></td>
+                        <td>
+                            <div class="autocomplete-wrapper" v-click-outside="() => closeAutocomplete(index)">
+                                <input type="text" class="form-control form-control-sm" 
+                                       v-model="row.exerciseSearch" @input="onSearchInput(index)" @focus="onSearchInput(index)"
+                                       placeholder="Buscar..." 
+                                       :class="{'border-danger': !row.exerciseId, 'border-success': row.exerciseId}"
+                                       style="border-width: 2px;">
+                                
+                                <small class="debug-text" v-if="activeSearchIndex === index && row.debugPhrases">
+                                    🔍 {{ row.debugPhrases }}
+                                </small>
 
-                            <div class="autocomplete-results" v-if="activeSearchIndex === index && searchResults.length > 0">
-                                <div class="autocomplete-item" v-for="item in searchResults" @click="selectExercise(index, item)">
-                                    <strong>{{ item.label }}</strong>
-                                    <small>{{ item.category }}</small>
+                                <div class="autocomplete-results" v-if="activeSearchIndex === index && searchResults.length > 0">
+                                    <div class="autocomplete-item" v-for="item in searchResults" @click="selectExercise(index, item)">
+                                        <strong>{{ item.label }}</strong> <small style="opacity:0.7; display:block; font-size:0.75em;">{{ item.category }}</small>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </td>
-
-                    <td><input type="text" class="form-control form-control-sm" v-model="row.note"></td>
-                    <td><input type="number" class="form-control form-control-sm text-center" v-model.number="row.sets"></td>
-                    <td><input type="number" class="form-control form-control-sm text-center" v-model.number="row.reps"></td>
-                    <td><input type="number" class="form-control form-control-sm text-center" v-model.number="row.weight" step="0.5"></td>
-                    <td>
-                        <div class="input-group input-group-sm">
-                            <input type="number" class="form-control text-center" v-model.number="row.rest">
-                            <span class="input-group-text">s</span>
-                        </div>
-                    </td>
-                    <td class="text-center">
-                        <button class="btn btn-link text-danger p-0" @click="removeRow(index)"><i class="bi bi-trash"></i></button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        
-        <div class="p-3 border-top d-flex justify-content-between">
-            <div>
-                <button class="btn btn-outline-secondary btn-sm" @click="addRow"><i class="bi bi-plus-lg"></i> Adicionar</button>
-                <button class="btn btn-outline-secondary btn-sm ms-2" @click="duplicateLastRow" v-if="rows.length > 0"><i class="bi bi-files"></i> Duplicar</button>
+                        </td>
+                        <td><input type="text" class="form-control form-control-sm" v-model="row.note"></td>
+                        <td><input type="number" class="form-control form-control-sm text-center" v-model.number="row.sets"></td>
+                        <td><input type="number" class="form-control form-control-sm text-center" v-model.number="row.reps"></td>
+                        <td><input type="number" class="form-control form-control-sm text-center" v-model.number="row.weight" step="0.5"></td>
+                        <td><input type="number" class="form-control form-control-sm text-center" v-model.number="row.rest"></td>
+                        <td class="text-center"><button class="btn btn-link text-danger p-0" @click="removeRow(index)"><i class="bi bi-trash"></i></button></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="p-3 border-top border-secondary">
+                <button class="btn btn-sm btn-outline-secondary" @click="addRow"><i class="bi bi-plus-lg"></i> Adicionar Linha</button>
             </div>
-            <small class="text-muted align-self-center">{{ rows.length }} itens</small>
         </div>
     </div>
 
-    <div class="search-tips">
-        <h6 class="fw-bold mb-3"><i class="bi bi-gear"></i> Regras de Busca Ativas (data/config/search_rules.json)</h6>
-        <div v-if="Object.keys(searchRules).length > 0">
-            <div class="row g-2">
-                <div class="col-md-4" v-for="(terms, key) in searchRules" :key="key">
-                    <div class="card h-100 border-0 shadow-sm" style="background: rgba(0,0,0,0.02);">
-                        <div class="card-body p-2">
-                            <strong class="text-primary">{{ key }}</strong>
-                            <div class="mt-1">
-                                <span v-for="t in terms" class="badge bg-secondary me-1" style="font-weight: normal; opacity: 0.9;">{{ t }}</span>
-                            </div>
-                        </div>
-                    </div>
+    <div v-show="currentTab === 'manager'">
+        <div class="card-custom p-4">
+            <h5 class="mb-3 border-bottom border-secondary pb-2">🗑️ Limpeza de Treinos</h5>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Regra</label>
+                    <select class="form-select" v-model="deleteFilter.type">
+                        <option value="contains">Contém</option>
+                        <option value="starts_with">Começa com</option>
+                        <option value="ends_with">Termina com</option>
+                        <option value="all">Todos</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Filtro</label>
+                    <input type="text" class="form-control" v-model="deleteFilter.text" :disabled="deleteFilter.type === 'all'">
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary w-100" @click="searchWorkoutsToDelete" :disabled="loading">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
                 </div>
             </div>
-        </div>
-        <div v-else class="alert alert-warning mb-0">
-            <i class="bi bi-exclamation-triangle"></i> Nenhuma regra carregada! Verifique o JSON.
+
+            <div v-if="workoutsToDelete.length > 0" class="mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="text-danger fw-bold">Resultados ({{ workoutsToDelete.length }})</h6>
+                    <button class="btn btn-sm btn-outline-secondary" @click="selectAllToDelete">Selecionar Todos</button>
+                </div>
+                <div class="list-group mb-3" style="max-height: 300px; overflow-y: auto;">
+                    <label class="list-group-item d-flex gap-2" v-for="w in workoutsToDelete" :key="w.id">
+                        <input class="form-check-input flex-shrink-0" type="checkbox" v-model="w.selected">
+                        <span><strong>{{ w.name }}</strong> <small class="text-muted ms-2">(ID: {{ w.id }})</small></span>
+                    </label>
+                </div>
+                <button class="btn btn-danger btn-lg w-100" @click="confirmDelete" :disabled="loading || !hasSelectedToDelete">
+                    DELETAR {{ selectedCount }} SELECIONADOS
+                </button>
+            </div>
+            
+            <div v-else-if="searchPerformed" class="mt-4 text-center text-muted py-4">
+                <i class="bi bi-search fs-1 d-block mb-2"></i> Nenhum treino encontrado.
+            </div>
         </div>
     </div>
 
-    <footer class="text-center mt-5 mb-3 text-muted">
-        By ROCKETTES
-    </footer>
-
-    <datalist id="workoutNamesList">
-        <option v-for="name in uniqueWorkoutNames" :value="name"></option>
-    </datalist>
+    <footer>By ROCKETTES</footer>
+    <datalist id="workoutNamesList"><option v-for="name in uniqueWorkoutNames" :value="name"></option></datalist>
 
     {% endraw %}
 </div>
@@ -182,15 +284,16 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <script>
+    // Inicializa Dark Mode
     function toggleTheme() {
         const html = document.documentElement;
         const current = html.getAttribute('data-bs-theme');
-        const next = current === 'light' ? 'dark' : 'light';
+        const next = current === 'dark' ? 'light' : 'dark';
         html.setAttribute('data-bs-theme', next);
         localStorage.setItem('theme', next);
-        document.getElementById('theme-icon').className = next === 'light' ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill text-warning';
     }
-    if (localStorage.getItem('theme') === 'dark') toggleTheme();
+    if (!localStorage.getItem('theme')) localStorage.setItem('theme', 'dark');
+    document.documentElement.setAttribute('data-bs-theme', localStorage.getItem('theme'));
 
     const { createApp } = Vue;
 
@@ -208,150 +311,78 @@
         directives: { clickOutside },
         data() {
             return {
-                loading: false, database: [], searchRules: {}, rows: [],
-                activeSearchIndex: -1, searchResults: [], notification: { show: false, message: '', type: 'info' }
+                currentTab: 'editor',
+                loading: false,
+                database: [],
+                searchRules: {},
+                rows: [],
+                activeSearchIndex: -1,
+                searchResults: [],
+                notification: { show: false, message: '', type: 'info' },
+                deleteFilter: { type: 'contains', text: '' },
+                workoutsToDelete: [],
+                searchPerformed: false
             }
         },
-        computed: { uniqueWorkoutNames() { return [...new Set(this.rows.map(r => r.workoutName).filter(n => n))]; } },
+        computed: { 
+            uniqueWorkoutNames() { return [...new Set(this.rows.map(r => r.workoutName).filter(n => n))]; },
+            hasSelectedToDelete() { return this.workoutsToDelete.some(w => w.selected); },
+            selectedCount() { return this.workoutsToDelete.filter(w => w.selected).length; }
+        },
         async mounted() {
             await Promise.all([this.loadExerciseDatabase(), this.loadSearchRules()]);
-            if(this.rows.length === 0) this.addRow();
+            if(this.rows.length === 0) this.addRow(); 
         },
         methods: {
             async loadExerciseDatabase() {
-                try { const r = await axios.get('/api/exercises'); this.database = r.data; } 
-                catch (e) { this.showNotify('Erro DB', 'danger'); }
+                try { const r = await axios.get('/api/exercises'); this.database = r.data; } catch(e){}
             },
             async loadSearchRules() {
-                try { const r = await axios.get('/api/search_rules'); this.searchRules = r.data; } 
-                catch (e) { console.error(e); }
+                try { const r = await axios.get('/api/search_rules'); this.searchRules = r.data; } catch(e){}
             },
-            triggerFileInput() { document.getElementById('csvInput').click(); },
             
-            async handleFileUpload(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                const formData = new FormData();
-                formData.append('file', file);
+            // --- EDITOR ACTIONS ---
+            triggerFileInput() { document.getElementById('csvInput').click(); },
+            async handleFileUpload(e) {
+                const file = e.target.files[0]; if(!file) return;
+                const fd = new FormData(); fd.append('file', file);
                 this.loading = true;
                 try {
-                    const response = await axios.post('/api/import_csv', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-                    if (response.data?.length > 0) {
-                        this.rows = [...this.rows.filter(r => r.workoutName), ...response.data];
-                        this.showNotify(`${response.data.length} importados!`, 'success');
-                    }
-                } catch (error) { this.showNotify('Erro CSV: ' + (error.response?.data?.error || error.message), 'danger'); }
-                finally { this.loading = false; event.target.value = ''; }
+                    const r = await axios.post('/api/import_csv', fd, {headers:{'Content-Type':'multipart/form-data'}});
+                    if(r.data.length){ this.rows = [...this.rows.filter(x=>x.workoutName), ...r.data]; this.notify('Importado!', 'success'); }
+                } catch(err) { this.notify('Erro CSV', 'danger'); } finally { this.loading = false; e.target.value=''; }
             },
-
-            // --- EXPORTAR CSV ---
             exportCSV() {
                 if (this.rows.length === 0) return;
-
-                // Cabeçalho compatível com o Importador
                 const headers = ["treino", "exercicio", "nota_personalizada", "series", "reps", "peso_kg", "intervalo_segundos"];
-                
-                // Mapeia os dados da tela para CSV
                 const csvRows = this.rows.map(row => {
                     return [
-                        row.workoutName,
-                        row.exerciseId || "", // Salva o ID se tiver, senão vazio
-                        row.note || "",       // A nota é a nota personalizada
-                        row.sets,
-                        row.reps,
-                        row.weight,
-                        row.rest
-                    ].join(","); // Join simples (assumindo sem vírgulas nos textos por enquanto)
+                        row.workoutName, row.exerciseId || "", row.note || "",
+                        row.sets, row.reps, row.weight, row.rest
+                    ].join(",");
                 });
-
-                const csvContent = [headers.join(","), ...csvRows].join("\n");
-                
-                // Cria o Blob e dispara o download
-                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-                const url = URL.createObjectURL(blob);
+                const blob = new Blob([[headers.join(","), ...csvRows].join("\n")], { type: "text/csv;charset=utf-8;" });
                 const link = document.createElement("a");
-                link.setAttribute("href", url);
+                link.setAttribute("href", URL.createObjectURL(blob));
                 link.setAttribute("download", "treino_exportado.csv");
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
             },
-            
-            addRow() {
-                const last = this.rows.length > 0 ? this.rows[this.rows.length - 1] : null;
-                this.rows.push({
-                    workoutName: last ? last.workoutName : '', exerciseSearch: '', exerciseId: null, exerciseLabel: '', debugPhrases: '',
-                    note: '', sets: 3, reps: 10, weight: null, rest: 60
-                });
+            async pullWorkouts() {
+                this.loading = true;
+                this.notify('Baixando treinos...', 'info');
+                try {
+                    const r = await axios.get('/api/pull_workouts');
+                    if (r.data.length > 0) {
+                        this.rows = r.data;
+                        this.notify(`${r.data.length} treinos baixados!`, 'success');
+                    } else { this.notify('Nenhum treino de força encontrado.', 'warning'); }
+                } catch (err) { this.notify('Erro no Pull', 'danger'); } finally { this.loading = false; }
             },
-            duplicateLastRow() {
-                if (this.rows.length === 0) return;
-                this.rows.push(JSON.parse(JSON.stringify(this.rows[this.rows.length - 1])));
-            },
-            removeRow(index) { this.rows.splice(index, 1); },
-            
-            normalizeText(text) {
-                if (!text) return "";
-                return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-            },
-
-            onSearchInput(index) {
-                this.activeSearchIndex = index;
-                const rawTerm = this.rows[index].exerciseSearch;
-                const normTerm = this.normalizeText(rawTerm);
-                
-                if (normTerm.length < 2) { this.searchResults = []; this.rows[index].debugPhrases = ""; return; }
-
-                let searchPhrases = new Set();
-                searchPhrases.add(normTerm);
-
-                for (const key in this.searchRules) {
-                    const synonyms = this.searchRules[key];
-                    const normKey = this.normalizeText(key);
-                    
-                    const matchKey = normKey.includes(normTerm);
-                    const matchSynonym = synonyms.some(s => this.normalizeText(s).includes(normTerm));
-
-                    if (matchKey || matchSynonym) {
-                        searchPhrases.add(normKey);
-                        synonyms.forEach(s => searchPhrases.add(this.normalizeText(s)));
-                    }
-                }
-
-                const phrasesArray = Array.from(searchPhrases);
-                
-                this.rows[index].debugPhrases = phrasesArray.slice(0, 5).join(", ") + (phrasesArray.length > 5 ? "..." : "");
-
-                let results = this.database.filter(ex => {
-                    const dbText = this.normalizeText((ex.search_term || '') + ' ' + ex.label);
-                    return phrasesArray.some(p => dbText.includes(p));
-                });
-
-                results.sort((a, b) => {
-                    const labelA = this.normalizeText(a.label);
-                    const labelB = this.normalizeText(b.label);
-                    const startsA = labelA.startsWith(normTerm);
-                    const startsB = labelB.startsWith(normTerm);
-                    if (startsA && !startsB) return -1;
-                    if (!startsA && startsB) return 1;
-                    return labelA.localeCompare(labelB);
-                });
-
-                this.searchResults = results.slice(0, 100);
-            },
-            
-            selectExercise(index, item) {
-                this.rows[index].exerciseId = item.id;
-                this.rows[index].exerciseLabel = item.label;
-                this.rows[index].exerciseSearch = item.label;
-                this.rows[index].debugPhrases = ""; 
-                this.activeSearchIndex = -1;
-            },
-            closeAutocomplete(index) { if (this.activeSearchIndex === index) this.activeSearchIndex = -1; },
-            
             async processAndSend() {
                 const invalid = this.rows.filter(r => !r.workoutName || !r.exerciseId);
-                if (invalid.length > 0) { this.showNotify(`Corrija os amarelos.`, 'warning'); return; }
+                if (invalid.length > 0) { this.notify(`Corrija os amarelos.`, 'warning'); return; }
                 this.loading = true;
                 try {
                     const groups = {};
@@ -365,11 +396,91 @@
                         await axios.post('/api/upload', { workoutName: name, steps: groups[name] });
                         successCount++;
                     }
-                    this.showNotify(`${successCount} enviados!`, 'success');
-                } catch (error) { this.showNotify('Erro: ' + (error.response?.data?.error || error.message), 'danger'); }
+                    this.notify(`${successCount} treinos enviados!`, 'success');
+                } catch (error) { this.notify('Erro no envio', 'danger'); }
                 finally { this.loading = false; }
             },
-            showNotify(msg, type) {
+
+            // --- MANAGER ACTIONS ---
+            async searchWorkoutsToDelete() {
+                if (this.deleteFilter.type !== 'all' && this.deleteFilter.text.length < 2) {
+                    this.notify('Digite pelo menos 2 letras.', 'warning');
+                    return;
+                }
+                this.loading = true;
+                this.searchPerformed = true;
+                this.workoutsToDelete = [];
+                try {
+                    const r = await axios.post('/api/list_workouts', {
+                        filterType: this.deleteFilter.type, filterText: this.deleteFilter.text
+                    });
+                    this.workoutsToDelete = r.data.map(w => ({ ...w, selected: true }));
+                } catch (err) { this.notify('Erro ao buscar', 'danger'); } finally { this.loading = false; }
+            },
+            selectAllToDelete() {
+                const allSelected = this.workoutsToDelete.every(w => w.selected);
+                this.workoutsToDelete.forEach(w => w.selected = !allSelected);
+            },
+            async confirmDelete() {
+                if (!confirm(`TEM CERTEZA?`)) return;
+                const ids = this.workoutsToDelete.filter(w => w.selected).map(w => w.id);
+                this.loading = true;
+                try {
+                    const r = await axios.post('/api/delete_workouts', { ids: ids });
+                    this.notify(`${r.data.deleted} deletados!`, 'success');
+                    this.workoutsToDelete = this.workoutsToDelete.filter(w => !ids.includes(w.id));
+                } catch (err) { this.notify('Erro ao deletar', 'danger'); } finally { this.loading = false; }
+            },
+
+            // --- UI HELPERS ---
+            addRow() { this.rows.push({workoutName:'', sets:3, reps:10, rest:60}); },
+            removeRow(i) { this.rows.splice(i, 1); },
+            duplicateLastRow() { if(this.rows.length) this.rows.push(JSON.parse(JSON.stringify(this.rows[this.rows.length-1]))); },
+            
+            normalizeText(text) { return text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() : ""; },
+
+            onSearchInput(index) {
+                this.activeSearchIndex = index;
+                const rawTerm = this.rows[index].exerciseSearch;
+                const normTerm = this.normalizeText(rawTerm);
+                if (normTerm.length < 2) { this.searchResults = []; this.rows[index].debugPhrases = ""; return; }
+
+                let searchPhrases = new Set();
+                searchPhrases.add(normTerm);
+
+                for (const key in this.searchRules) {
+                    const synonyms = this.searchRules[key];
+                    const normKey = this.normalizeText(key);
+                    if (normKey.includes(normTerm) || synonyms.some(s => this.normalizeText(s).includes(normTerm))) {
+                        searchPhrases.add(normKey);
+                        synonyms.forEach(s => searchPhrases.add(this.normalizeText(s)));
+                    }
+                }
+                const phrasesArray = Array.from(searchPhrases);
+                
+                this.rows[index].debugPhrases = phrasesArray.slice(0, 5).join(", ") + (phrasesArray.length > 5 ? "..." : "");
+
+                let results = this.database.filter(ex => {
+                    const dbText = this.normalizeText((ex.search_term || '') + ' ' + ex.label);
+                    return phrasesArray.some(p => dbText.includes(p));
+                });
+                results.sort((a, b) => {
+                    const labelA = this.normalizeText(a.label);
+                    const labelB = this.normalizeText(b.label);
+                    if (labelA.startsWith(normTerm) && !labelB.startsWith(normTerm)) return -1;
+                    if (!labelA.startsWith(normTerm) && labelB.startsWith(normTerm)) return 1;
+                    return labelA.localeCompare(labelB);
+                });
+                this.searchResults = results.slice(0, 100);
+            },
+            selectExercise(index, item) {
+                this.rows[index].exerciseId = item.id;
+                this.rows[index].exerciseLabel = item.label;
+                this.rows[index].exerciseSearch = item.label;
+                this.activeSearchIndex = -1;
+            },
+            closeAutocomplete(index) { if (this.activeSearchIndex === index) this.activeSearchIndex = -1; },
+            notify(msg, type) {
                 this.notification = { show: true, message: msg, type: type };
                 setTimeout(() => this.notification.show = false, 5000);
             }
