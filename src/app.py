@@ -46,33 +46,23 @@ def load_data():
         SEARCH_RULES_CACHE = {}
 
 def find_exercise_id(query):
-    """
-    Busca com expansão agressiva de sinônimos.
-    Se digitar 'peck', ele ativa a regra 'peckdeck' e busca também por 'crucifixo'.
-    """
     if not query: return None, ""
     
     query_norm = normalize_text(query)
     
-    # 1. ID Exato (Caso o CSV já venha com ID)
+    # 1. ID Exato
     if "_" in query and query.isupper() and query in EXERCISE_CACHE:
         return query, EXERCISE_CACHE[query]['label']
 
-    # 2. Expansão de Termos (A Mágica acontece aqui)
+    # 2. Expansão de Termos
     search_phrases = set()
-    search_phrases.add(query_norm) # Busca pelo termo original também
+    search_phrases.add(query_norm)
 
-    # Varre TODAS as regras para ver se o termo digitado ativa alguma
     for rule_key, synonyms in SEARCH_RULES_CACHE.items():
-        # Normaliza a chave da regra e os sinônimos
         norm_key = normalize_text(rule_key)
         norm_synonyms = [normalize_text(s) for s in synonyms]
         
-        # LÓGICA DE GATILHO:
-        # 1. O que foi digitado está contido na chave? (Ex: "peck" em "peckdeck")
-        # 2. OU O que foi digitado é um dos sinônimos? (Ex: "voador")
         if query_norm in norm_key or any(query_norm in s for s in norm_synonyms):
-            # Se ativou, adiciona TUDO à lista de busca
             search_phrases.add(norm_key)
             for s in norm_synonyms:
                 search_phrases.add(s)
@@ -82,20 +72,13 @@ def find_exercise_id(query):
     best_score = 0
 
     for ex_id, ex_data in EXERCISE_CACHE.items():
-        # Texto do banco para comparar
         db_text = normalize_text(ex_data.get('search_term', '') + " " + ex_data['label'])
         
         for phrase in search_phrases:
             if phrase in db_text:
-                # Sistema de Pontuação
                 score = len(phrase)
-                
-                # Bônus massivo se começar com o termo (prioridade visual)
                 if db_text.startswith(phrase):
                     score += 50
-                
-                # Penaliza resultados muito longos que contêm termo curto
-                # (Evita que "Pull" dê match em "Face Pull" antes de "Pull Up")
                 len_diff = len(db_text) - len(phrase)
                 score -= (len_diff * 0.1)
 
@@ -103,7 +86,7 @@ def find_exercise_id(query):
                     best_score = score
                     best_match = ex_data
 
-    if best_match and best_score > 3: # Threshold para evitar lixo
+    if best_match and best_score > 3: 
         return best_match['id'], best_match['label']
     
     return None, ""
@@ -151,9 +134,7 @@ def api_import_csv():
         
         file = request.files['file']
         df = pd.read_csv(file)
-        # Normaliza cabeçalho removendo espaços e lowercase
         df.columns = [c.lower().strip() for c in df.columns]
-        
         load_data()
         
         imported_rows = []
@@ -165,18 +146,18 @@ def api_import_csv():
             col_exercicio = str(row.get('exercicio', '')).strip()
             if col_exercicio == 'nan': col_exercicio = ''
 
-            # Usa a nota ou o exercício como termo de busca
-            search_term = nota_original if nota_original else col_exercicio
+            # Prioridade: 'exercicio' se existir, senão 'nota'
+            search_term = col_exercicio if col_exercicio else nota_original
             
             found_id = None
             found_label = ""
             
-            # Se já for ID, usa direto. Senão, busca inteligente.
             if col_exercicio and "_" in col_exercicio and col_exercicio.isupper() and col_exercicio in EXERCISE_CACHE:
                 found_id = col_exercicio
                 found_label = EXERCISE_CACHE[col_exercicio]['label']
             else:
-                found_id, found_label = find_exercise_id(search_term)
+                if search_term:
+                    found_id, found_label = find_exercise_id(search_term)
 
             imported_rows.append({
                 "workoutName": str(row.get('treino', 'Treino Importado')),
@@ -216,6 +197,7 @@ def api_upload():
             ex_id = step.get('exerciseId')
             ex_data = EXERCISE_CACHE.get(ex_id)
             
+            # Fallback
             category = "STRENGTH_EQUIPMENT"
             internal_name = "UNIDENTIFIED"
             
@@ -231,12 +213,16 @@ def api_upload():
             series = int(step.get('sets', 1))
             reps = int(step.get('reps', 10))
             peso = float(step.get('weight', 0) or 0)
-            descanso = int(step.get('restDuration', 0) or 0)
+            
+            # CORREÇÃO: Lê 'restDuration' (frontend) ou 'rest' (csv import)
+            descanso = int(step.get('restDuration', 0) or step.get('rest', 0) or 0)
+            
             nota = step.get('note', '')
 
             child_id = i + 1 
             final_reps = reps if reps > 0 else 1
 
+            # 1. Passo de Exercício
             exercise_step = {
                 "type": "ExecutableStepDTO",
                 "stepId": None,
@@ -255,6 +241,7 @@ def api_upload():
                 exercise_step["weightValue"] = peso
                 exercise_step["weightUnit"] = {"unitKey": "kilogram"} 
 
+            # 2. Passo de Descanso
             rest_step = None
             if descanso > 0:
                 rest_step = {
@@ -269,13 +256,16 @@ def api_upload():
                     "targetType": { "workoutTargetTypeId": 1, "workoutTargetTypeKey": "no.target" }
                 }
 
+            # 3. Montagem do Bloco
             if series > 1:
                 group_order = global_order_counter
                 global_order_counter += 1
                 block_steps = []
+                
                 exercise_step["stepOrder"] = global_order_counter
                 block_steps.append(exercise_step)
                 global_order_counter += 1
+                
                 if rest_step:
                     rest_step["stepOrder"] = global_order_counter
                     block_steps.append(rest_step)
@@ -313,10 +303,19 @@ def api_upload():
             }]
         }
         
-        print(f"📤 Enviando JSON para: {workout_name}")
-        response = client.connectapi("/workout-service/workout", method="POST", json=final_payload)
+        print(f"📤 Tentando enviar: {workout_name}")
 
-        return jsonify({ "success": True, "message": "Treino criado com sucesso!", "id": response.get('workoutId') })
+        try:
+            response = client.connectapi("/workout-service/workout", method="POST", json=final_payload)
+            return jsonify({ "success": True, "message": "Treino criado com sucesso!", "id": response.get('workoutId') })
+        except Exception as api_error:
+            # DEBUG: Imprime o JSON se der erro 400
+            print("\n" + "="*50)
+            print(f"❌ ERRO API GARMIN (400 Bad Request) no treino: {workout_name}")
+            print("👇 DUMP DO PAYLOAD QUE CAUSOU O ERRO:")
+            print(json.dumps(final_payload, indent=2))
+            print("="*50 + "\n")
+            raise api_error
 
     except Exception as e:
         traceback.print_exc()
